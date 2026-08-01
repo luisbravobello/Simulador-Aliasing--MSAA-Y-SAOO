@@ -258,34 +258,44 @@ class AliasingSimulator {
     }
 
     drawAliasedLine(x1, y1, x2, y2, thickness, color) {
-        const dx = Math.abs(x2 - x1);
-        const dy = Math.abs(y2 - y1);
-        const sx = x1 < x2 ? 1 : -1;
-        const sy = y1 < y2 ? 1 : -1;
+        const pixelGridSize = 4;
+
+        // Trabajar directamente en coordenadas de grilla (celdas), no en píxeles continuos.
+        // Esto garantiza que el paso de Bresenham avance exactamente 1 celda por vez.
+        let gx1 = Math.floor(x1 / pixelGridSize);
+        let gy1 = Math.floor(y1 / pixelGridSize);
+        const gx2 = Math.floor(x2 / pixelGridSize);
+        const gy2 = Math.floor(y2 / pixelGridSize);
+
+        const dx = Math.abs(gx2 - gx1);
+        const dy = Math.abs(gy2 - gy1);
+        const sx = gx1 < gx2 ? 1 : -1;
+        const sy = gy1 < gy2 ? 1 : -1;
         let err = dx - dy;
 
-        let currX = x1;
-        let currY = y1;
-
-        const pixelGridSize = 4;
         this.ctx.fillStyle = color;
 
-        while (true) {
-            const gridX = Math.floor(currX / pixelGridSize) * pixelGridSize;
-            const gridY = Math.floor(currY / pixelGridSize) * pixelGridSize;
-            this.ctx.fillRect(gridX, gridY, pixelGridSize, pixelGridSize);
+        // Límite de seguridad: en el peor caso el número de pasos es dx + dy.
+        // Se añade margen extra para evitar cualquier congelamiento si algo inesperado ocurre.
+        const maxSteps = dx + dy + 4;
+        let steps = 0;
 
-            if (Math.abs(currX - x2) < 2 && Math.abs(currY - y2) < 2) break;
+        while (steps <= maxSteps) {
+            this.ctx.fillRect(gx1 * pixelGridSize, gy1 * pixelGridSize, pixelGridSize, pixelGridSize);
+
+            if (gx1 === gx2 && gy1 === gy2) break;
 
             const e2 = 2 * err;
             if (e2 > -dy) {
                 err -= dy;
-                currX += sx * pixelGridSize;
+                gx1 += sx;
             }
             if (e2 < dx) {
                 err += dx;
-                currY += sy * pixelGridSize;
+                gy1 += sy;
             }
+
+            steps++;
         }
     }
 
