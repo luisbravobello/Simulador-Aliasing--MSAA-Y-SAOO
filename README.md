@@ -10,7 +10,7 @@ Explica y visualiza tres conceptos fundamentales del pipeline gráfico:
 
 ## 🎮 Demo en vivo
 
-👉 **[Ver simulador en GitHub Pages](#)** *(actualiza este enlace una vez publicado)*
+👉 **[Ver simulador en GitHub Pages](https://luisbravobello.github.io/Simulador-Aliasing--MSAA-Y-SAOO/)**
 
 ## 🖥️ Características
 
@@ -57,13 +57,8 @@ python3 -m http.server 8000
 
 Luego visita `http://localhost:8000`.
 
-## 🌐 Publicar en GitHub Pages
-
-1. Crea un repositorio en GitHub y sube el contenido de esta carpeta a la rama `main`.
-2. Ve a **Settings → Pages** en tu repositorio.
-3. En **Source**, selecciona la rama `main` y la carpeta `/ (root)`.
-4. Guarda. GitHub Pages publicará el sitio en unos minutos en:
-   `https://<tu-usuario>.github.io/<nombre-del-repo>/`
+Este proyecto está publicado en:
+👉 https://luisbravobello.github.io/Simulador-Aliasing--MSAA-Y-SAOO/
 
 ##  Desarrollador
 
