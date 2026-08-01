@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Gráfico OpenGL: Aliasing, MSAA y SSAO | Edición Nave Espacial</title>
+    <meta name="description"
+        content="Simulador educativo interactivo de gráficos por computadora sobre Aliasing, MSAA y SSAO con código OpenGL/FreeGLUT y modelo de nave espacial retro.">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+    <!-- HUD Header -->
+    <header class="hud">
+        <div class="hud-container">
+            <div class="hud-brand">
+                <canvas id="brand-spaceship" width="36" height="36"></canvas>
+                <div>
+                    <div class="hud-title">SIMULADOR OPENGL</div>
+                    <div class="hud-subtitle">ALIASING • MSAA • SSAO</div>
+                </div>
+            </div>
+
+            <!-- Health / Shield Bar & Navigation -->
+            <div class="hud-status">
+                <div class="health-bar-container">
+                    <span>SHIELD</span>
+                    <div class="health-bar">
+                        <div class="health-segment"></div>
+                        <div class="health-segment"></div>
+                        <div class="health-segment"></div>
+                        <div class="health-segment"></div>
+                        <div class="health-segment"></div>
+                        <div class="health-segment"></div>
+                        <div class="health-segment"></div>
+                        <div class="health-segment"></div>
+                    </div>
+                </div>
+
+                <nav class="stage-nav">
+                    <button class="stage-btn active" data-stage="stage-1" id="nav-stage-1">STAGE 1: ALIASING</button>
+                    <button class="stage-btn" data-stage="stage-2" id="nav-stage-2">STAGE 2: MSAA</button>
+                    <button class="stage-btn" data-stage="stage-3" id="nav-stage-3">STAGE 3: SSAO</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Spaceship Pilot Companion Widget -->
+        <section class="megaman-widget">
+            <canvas id="spaceship-canvas" width="64" height="64"></canvas>
+            <div class="speech-bubble" id="spaceship-speech">
+                Cargando simulador de nave espacial...
+            </div>
+        </section>
+
+        <!-- STAGE 1: ALIASING -->
+        <section id="stage-1" class="stage-content active">
+            <div class="stage-header">
+                <div class="stage-title-group">
+                    <h2>STAGE 1: ALIASING <span class="stage-badge">ESPACIAL</span></h2>
+                </div>
+            </div>
+
+            <div class="grid-2col">
+                <!-- Left: Interactive Canvas Demo -->
+                <div class="retro-panel">
+                    <div class="panel-header">
+                        <span>CANVAS INTERACTIVO — DEMO ALIASING</span>
+                        <span class="dot"></span>
+                    </div>
+
+                    <div class="canvas-wrapper">
+                        <canvas id="aliasing-canvas" width="560" height="380"></canvas>
+                        <div class="scanlines"></div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="controls-bar">
+                        <div class="control-group">
+                            <label for="alias-zoom">ZOOM:</label>
+                            <input type="range" id="alias-zoom" class="retro-slider" min="1" max="6" step="0.5"
+                                value="1">
+                            <span id="alias-zoom-val">1x</span>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="alias-angle">ÁNGULO:</label>
+                            <input type="range" id="alias-angle" class="retro-slider" min="0" max="90" step="5"
+                                value="0">
+                            <span id="alias-angle-val">0°</span>
+                        </div>
+
+                        <div class="control-group">
+                            <button id="alias-toggle-grid" class="retro-btn active">GRILLA PÍXEL</button>
+                            <button id="alias-toggle-smooth" class="retro-btn">SUAVIZADO (AA)</button>
+                        </div>
+
+                        <div class="control-group">
+                            <label>FORMA:</label>
+                            <button class="retro-btn alias-shape-btn active" data-shape="sprite">NAVE ESPACIAL</button>
+                            <button class="retro-btn alias-shape-btn" data-shape="line">LÍNEA</button>
+                            <button class="retro-btn alias-shape-btn" data-shape="triangle">TRIÁNGULO</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Concept Explanation -->
+                <div class="retro-panel">
+                    <div class="panel-header">
+                        <span>TEORÍA Y COMPORTAMIENTO</span>
+                        <span class="dot"></span>
+                    </div>
+
+                    <div class="explanation-text">
+                        <p>El <strong>Aliasing</strong> (efecto escalera o <em>jaggies</em>) ocurre en gráficos por
+                            computadora cuando intentamos representar formas continuas (como el fuselaje inclinado y
+                            alerones de la nave espacial) en una pantalla compuesta por una grilla discreta de píxeles.
+                        </p>
+
+                        <div class="concept-box">
+                            <strong>¿Por qué sucede?</strong><br>
+                            Cada píxel de la pantalla sólo puede tomar las coordenadas del centro del píxel. Al
+                            muestrear líneas diagonales en las alas de la nave, los píxeles adyacentes cambian
+                            abruptamente entre 0% y 100% de intensidad, formando escalones visibles.
+                        </div>
+
+                        <p>En videojuegos arcade 8-bit / 16-bit de naves espaciales (como Galaga o Gradius), el aliasing
+                            es característico de los sprites de píxeles. En motores 3D modernos, genera parpadeos y
+                            bordes dentados molestos.</p>
+                    </div>
+
+                    <!-- Code Block -->
+                    <div class="code-panel">
+                        <div class="code-header">
+                            <span>CÓDIGO OPENGL / FREEGLUT</span>
+                            <span class="lang-tag">C / C++</span>
+                        </div>
+                        <pre><code><span class="code-cm">// Ejemplo 1: Renderizado con Aliasing activo en OpenGL</span>
+<span class="code-kw">void</span> <span class="code-fn">renderSceneAliased</span>() {
+    <span class="code-cm">// Desactivar multisampling y suavizado</span>
+    <span class="code-fn">glDisable</span>(GL_MULTISAMPLE);
+    <span class="code-fn">glDisable</span>(GL_LINE_SMOOTH);
+
+    <span class="code-fn">glColor3f</span>(<span class="code-num">0.0f</span>, <span class="code-num">0.9f</span>, <span class="code-num">1.0f</span>); <span class="code-cm">// Cian Nave</span>
+    <span class="code-fn">glLineWidth</span>(<span class="code-num">3.0f</span>);
+
+    <span class="code-fn">glBegin</span>(GL_LINES);
+        <span class="code-fn">glVertex2f</span>(-<span class="code-num">0.8f</span>, -<span class="code-num">0.4f</span>); <span class="code-cm">// Punto A</span>
+        <span class="code-fn">glVertex2f</span>(<span class="code-num">0.8f</span>, <span class="code-num">0.4f</span>);   <span class="code-cm">// Punto B diagonal</span>
+    <span class="code-fn">glEnd</span>();
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STAGE 2: MSAA -->
+        <section id="stage-2" class="stage-content">
+            <div class="stage-header">
+                <div class="stage-title-group">
+                    <h2>STAGE 2: MSAA <span class="stage-badge">MULTI-SAMPLE ANTI-ALIASING</span></h2>
+                </div>
+            </div>
+
+            <div class="grid-2col">
+                <!-- Left: MSAA Interactive Canvas -->
+                <div class="retro-panel">
+                    <div class="panel-header">
+                        <span>CANVAS INTERACTIVO — DEMO SUB-MUESTRAS MSAA</span>
+                        <span class="dot"></span>
+                    </div>
+
+                    <div class="canvas-wrapper">
+                        <canvas id="msaa-canvas" width="560" height="380"></canvas>
+                        <div class="scanlines"></div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="controls-bar">
+                        <div class="control-group">
+                            <label>NIVEL DE MSAA:</label>
+                            <button class="retro-btn msaa-sample-btn" data-samples="1">1x (OFF)</button>
+                            <button class="retro-btn msaa-sample-btn" data-samples="2">2x</button>
+                            <button class="retro-btn msaa-sample-btn active" data-samples="4">4x</button>
+                            <button class="retro-btn msaa-sample-btn" data-samples="8">8x</button>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="msaa-angle">INCLINACIÓN:</label>
+                            <input type="range" id="msaa-angle" class="retro-slider" min="5" max="80" step="5"
+                                value="25">
+                            <span id="msaa-angle-val">25°</span>
+                        </div>
+
+                        <div class="control-group">
+                            <button id="msaa-toggle-sub" class="retro-btn active">VER SUBPÍXELES</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 10px; font-size: 0.75rem; color: var(--gold-energy); font-family: var(--font-pixel);"
+                        id="msaa-coverage-stat">
+                        Submuestras dentro: Evaluando...
+                    </div>
+                </div>
+
+                <!-- Right: Concept Explanation & Code -->
+                <div class="retro-panel">
+                    <div class="panel-header">
+                        <span>CÓMO FUNCIONA EL MSAA</span>
+                        <span class="dot"></span>
+                    </div>
+
+                    <div class="explanation-text">
+                        <p><strong>MSAA (Multi-Sample Anti-Aliasing)</strong> es una técnica espacial optimizada que
+                            reduce los bordes dentados evaluando múltiples puntos de prueba (sub-muestras) dentro de la
+                            superficie de cada píxel en las aristas de los polígonos.</p>
+
+                        <div class="concept-box">
+                            <strong>Eficiencia clave del MSAA:</strong><br>
+                            A diferencia de SSAA (Super-Sampling), el MSAA <em>no ejecuta el Fragment Shader varias
+                                veces por píxel</em>. Solamente evalúa la cobertura geométrica en las sub-muestras y
+                            promedia el color final en proporción al porcentaje de puntos cubiertos.
+                        </div>
+
+                        <p>Al seleccionar <strong>4x MSAA</strong>, si 3 de 4 submuestras caen dentro del ala de la nave
+                            espacial, el píxel se pintará con 75% del color del polígono y 25% del fondo, creando un
+                            degradado suave en la silueta.</p>
+                    </div>
+
+                    <!-- Code Block -->
+                    <div class="code-panel">
+                        <div class="code-header">
+                            <span>CONFIGURACIÓN MSAA EN FREEGLUT / OPENGL</span>
+                            <span class="lang-tag">C / FreeGLUT</span>
+                        </div>
+                        <pre><code><span class="code-cm">// Inicializar MSAA en la ventana de FreeGLUT</span>
+<span class="code-kw">int</span> <span class="code-fn">main</span>(<span class="code-kw">int</span> argc, <span class="code-kw">char</span>** argv) {
+    <span class="code-fn">glutInit</span>(&argc, argv);
+    <span class="code-cm">// Solicitar Buffer con soporte Multisample</span>
+    <span class="code-fn">glutInitDisplayMode</span>(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE);
+    <span class="code-fn">glutInitWindowSize</span>(<span class="code-num">800</span>, <span class="code-num">600</span>);
+    <span class="code-fn">glutCreateWindow</span>(<span class="code-str">"FreeGLUT MSAA Simulator"</span>);
+
+    <span class="code-cm">// Activar Multisampling en el Pipeline de OpenGL</span>
+    <span class="code-fn">glEnable</span>(GL_MULTISAMPLE);
+
+    <span class="code-cm">// Consultar número de muestras soportadas</span>
+    GLint samples;
+    <span class="code-fn">glGetIntegerv</span>(GL_SAMPLES, &samples);
+    <span class="code-fn">printf</span>(<span class="code-str">"Muestras MSAA activas: %d\n"</span>, samples);
+
+    <span class="code-fn">glutMainLoop</span>();
+    <span class="code-kw">return</span> <span class="code-num">0</span>;
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STAGE 3: SSAO -->
+        <section id="stage-3" class="stage-content">
+            <div class="stage-header">
+                <div class="stage-title-group">
+                    <h2>STAGE 3: SSAO <span class="stage-badge">SCREEN-SPACE AMBIENT OCCLUSION</span></h2>
+                </div>
+            </div>
+
+            <div class="grid-2col">
+                <!-- Left: SSAO Interactive Canvas -->
+                <div class="retro-panel">
+                    <div class="panel-header">
+                        <span>CANVAS INTERACTIVO — ESCENA 3D ISOMÉTRICA CON SSAO</span>
+                        <span class="dot"></span>
+                    </div>
+
+                    <div class="canvas-wrapper">
+                        <canvas id="ssao-canvas" width="560" height="380"></canvas>
+                        <div class="scanlines"></div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="controls-bar">
+                        <div class="control-group">
+                            <button id="ssao-toggle" class="retro-btn active">SSAO ON / OFF</button>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="ssao-radius">RADIO:</label>
+                            <input type="range" id="ssao-radius" class="retro-slider" min="5" max="30" step="1"
+                                value="15">
+                            <span id="ssao-radius-val">15px</span>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="ssao-intensity">INTENSIDAD:</label>
+                            <input type="range" id="ssao-intensity" class="retro-slider" min="0.5" max="3.0" step="0.2"
+                                value="1.5">
+                            <span id="ssao-intensity-val">1.5x</span>
+                        </div>
+
+                        <div class="control-group">
+                            <label>MODO:</label>
+                            <button class="retro-btn ssao-mode-btn active" data-mode="full">ESCENA FINAL</button>
+                            <button class="retro-btn ssao-mode-btn" data-mode="occlusionOnly">SOLO SOMBRAS (AO)</button>
+                            <button class="retro-btn ssao-mode-btn" data-mode="depthMap">MAPA PROFUNDIDAD</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Concept Explanation & GLSL Code -->
+                <div class="retro-panel">
+                    <div class="panel-header">
+                        <span>OCLUSIÓN AMBIENTAL EN ESPACIO DE PANTALLA</span>
+                        <span class="dot"></span>
+                    </div>
+
+                    <div class="explanation-text">
+                        <p><strong>SSAO (Screen-Space Ambient Occlusion)</strong> es un algoritmo de sombreado en tiempo
+                            real desarrollado por Crytek. Simula cómo la luz ambiental se bloquea en pliegues, grietas y
+                            esquinas donde dos superficies están muy cerca.</p>
+
+                        <div class="concept-box">
+                            <strong>¿Cómo funciona en espacio de pantalla?</strong><br>
+                            Utiliza el mapa de profundidad (Depth Buffer) y las normales de la geometría. Para cada
+                            fragmento, genera muestras aleatorias en una hemisferio y comprueba cuántas quedan "ocultas"
+                            detrás de otra geometría cercana.
+                        </div>
+
+                        <p>Al agregar SSAO a la estructura de la nave espacial y hangar, la escena adquiere volumen
+                            tridimensional y sombras de contacto reales sin necesidad de Ray Tracing.</p>
+                    </div>
+
+                    <!-- Code Block -->
+                    <div class="code-panel">
+                        <div class="code-header">
+                            <span>FRAGMENT SHADER DE SSAO (GLSL)</span>
+                            <span class="lang-tag">GLSL / OpenGL 3.3+</span>
+                        </div>
+                        <pre><code><span class="code-cm">// Shader Fragmento SSAO Simplificado</span>
+<span class="code-kw">uniform</span> sampler2D gPosition; <span class="code-cm">// Textura de Posiciones 3D</span>
+<span class="code-kw">uniform</span> sampler2D gNormal;   <span class="code-cm">// Textura de Normales</span>
+<span class="code-kw">uniform</span> vec3 samples[<span class="code-num">64</span>];    <span class="code-cm">// Núcleo de Muestreo Hemisférico</span>
+
+<span class="code-kw">void</span> <span class="code-fn">main</span>() {
+    vec3 fragPos = <span class="code-fn">texture</span>(gPosition, TexCoords).xyz;
+    vec3 normal  = <span class="code-fn">texture</span>(gNormal, TexCoords).xyz;
+
+    <span class="code-type">float</span> occlusion = <span class="code-num">0.0</span>;
+    <span class="code-kw">for</span>(<span class="code-type">int</span> i = <span class="code-num">0</span>; i &lt; <span class="code-num">64</span>; ++i) {
+        <span class="code-cm">// Obtener posición de muestra en espacio de vista</span>
+        vec3 samplePos = fragPos + samples[i] * radius;
+
+        <span class="code-cm">// Proyectar muestra a coordenadas de pantalla</span>
+        vec4 offset = vec4(samplePos, <span class="code-num">1.0</span>);
+        offset = projection * offset;
+        offset.xyz /= offset.w;
+        offset.xyz = offset.xyz * <span class="code-num">0.5</span> + <span class="code-num">0.5</span>;
+
+        <span class="code-cm">// Comprobar profundidad almacenada</span>
+        <span class="code-type">float</span> sampleDepth = <span class="code-fn">texture</span>(gPosition, offset.xy).z;
+        <span class="code-kw">if</span> (sampleDepth &gt;= samplePos.z + bias) {
+            occlusion += <span class="code-num">1.0</span>;
+        }
+    }
+    <span class="code-cm">// Invertir y promediar oclusión</span>
+    FragColor = <span class="code-num">1.0</span> - (occlusion / <span class="code-num">64.0</span>);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>Simulador Educativo de Gráficos OpenGL — <strong>Aliasing, MSAA y SSAO</strong></p>
+        <p>Desarrollado con HTML, CSS y JavaScript Vanilla | Edición Nave Espacial Retro</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/spaceship.js"></script>
+    <script src="js/aliasing.js"></script>
+    <script src="js/msaa.js"></script>
+    <script src="js/ssao.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
